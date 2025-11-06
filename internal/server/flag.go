@@ -73,6 +73,7 @@ func (s *Server) ListFlags(ctx context.Context, r *flipt.ListFlagRequest) (*flip
 			DefaultVariant: defaultVariant,
 			Type:           toListFlagType(flag.Type),
 			Enabled:        flag.Enabled,
+			Tags:           flag.Tags,
 		}
 
 		if s.includeFlagMetadata {

@@ -520,6 +520,10 @@ components:
                     type: string
                 metadata:
                     type: object
+                tags:
+                    type: array
+                    items:
+                        type: string
         FlagList:
             type: object
             properties:

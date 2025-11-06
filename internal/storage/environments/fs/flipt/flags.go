@@ -284,6 +284,7 @@ func payloadFromFlag(flag *ext.Flag) (_ *anypb.Any, err error) {
 		Type:        core.FlagType(core.FlagType_value[flag.Type]),
 		Description: flag.Description,
 		Enabled:     flag.Enabled,
+		Tags:        flag.Tags,
 	}
 
 	if flag.Metadata != nil {
@@ -387,6 +388,7 @@ func resourceToFlag(r *rpcenvironments.Resource) (*ext.Flag, error) {
 		Description: f.Description,
 		Enabled:     f.Enabled,
 		Metadata:    f.Metadata.AsMap(),
+		Tags:        f.Tags,
 	}
 
 	for _, variant := range f.Variants {

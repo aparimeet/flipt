@@ -39,6 +39,7 @@ export interface IFlag {
   variants?: IVariant[];
   rules?: IRule[];
   rollouts?: IRollout[];
+  tags?: string[];
 }
 
 export interface IFlagList extends IPageable {

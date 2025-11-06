@@ -28,6 +28,7 @@ message Flag {
   FlagType type = 9;
   optional Variant default_variant = 10;
   optional google.protobuf.Struct metadata = 11;
+  repeated string tags = 12;
 }
 
 message FlagList {

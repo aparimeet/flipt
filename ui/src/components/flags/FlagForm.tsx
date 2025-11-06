@@ -1,4 +1,4 @@
-import { Form, Formik } from 'formik';
+import { Form, Formik, useField } from 'formik';
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router';
@@ -32,9 +32,66 @@ import { FlagFormProvider } from './FlagFormContext';
 import { MetadataForm } from './MetadataForm';
 import MetadataFormErrorBoundary from './MetadataFormErrorBoundary';
 
+function TagsInput({ name, placeholder }: { name: string; placeholder?: string }) {
+  const [field, , helpers] = useField<string[]>(name);
+  const [inputValue, setInputValue] = useState('');
+
+  const addTag = () => {
+    const tag = inputValue.trim();
+    if (tag && !field.value.includes(tag)) {
+      helpers.setValue([...field.value, tag]);
+      setInputValue('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    helpers.setValue(field.value.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      addTag();
+    }
+  };
+
+  return (
+    <div className="mt-1">
+      {field.value.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {field.value.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center rounded-md bg-gray-200 dark:bg-gray-700 px-2 py-1 text-sm text-gray-900 dark:text-gray-100"
+            >
+              {tag}
+              <button
+                type="button"
+                className="ml-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => removeTag(tag)}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        type="text"
+        className="block w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-900 shadow-xs focus:border-violet-300 focus:ring-violet-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:focus:border-violet-500 dark:focus:ring-violet-500 sm:text-sm"
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+      />
+    </div>
+  );
+}
+
 // Form-specific interface that allows null type during initialization
 export interface IFlagFormValues extends Omit<IFlag, 'type'> {
   type: FlagType | null;
+  tags?: string[];
 }
 
 const flagTypes = [
@@ -148,7 +205,8 @@ export default function FlagForm(props: { flag?: IFlag }) {
       rollouts: values.type === FlagType.BOOLEAN ? values.rollouts : undefined,
       variants: values.type === FlagType.VARIANT ? values.variants : undefined,
       rules: values.type === FlagType.VARIANT ? values.rules : undefined,
-      metadata: values.metadata
+      metadata: values.metadata,
+      tags: values.tags
     };
 
     if (isNew) {
@@ -179,7 +237,8 @@ export default function FlagForm(props: { flag?: IFlag }) {
     rules: flag?.rules || [],
     rollouts: flag?.rollouts || [],
     defaultVariant: flag?.defaultVariant,
-    metadata: flag?.metadata || {}
+    metadata: flag?.metadata || {},
+    tags: flag?.tags || []
   };
 
   const [hasMetadataErrors, setHasMetadataErrors] = useState(false);
@@ -400,6 +459,26 @@ export default function FlagForm(props: { flag?: IFlag }) {
                       className="mt-1"
                       name="description"
                       id="description"
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <div className="flex justify-between">
+                      <label
+                        htmlFor="tags"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        Tags
+                      </label>
+                      <span
+                        className="text-xs text-gray-500 dark:text-gray-400"
+                        id="tags-optional"
+                      >
+                        Optional
+                      </span>
+                    </div>
+                    <TagsInput
+                      name="tags"
+                      placeholder="Add tags..."
                     />
                   </div>
                   <div className="col-span-3">

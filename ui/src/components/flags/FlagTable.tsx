@@ -35,6 +35,7 @@ import Searchbox from '~/components/Searchbox';
 import { DataTablePagination } from '~/components/TablePagination';
 import { TableSkeleton } from '~/components/TableSkeleton';
 import { DataTableViewOptions } from '~/components/TableViewOptions';
+import { TagBadge } from '~/components/TagBadge';
 import Well from '~/components/Well';
 
 import { IBatchFlagEvaluationCount } from '~/types/Analytics';
@@ -129,6 +130,13 @@ function FlagListItem({
             <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
               {item.description}
             </p>
+          )}
+          {item.tags && item.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {item.tags.map((tag) => (
+                <TagBadge key={tag} tag={{ label: tag, variant: 'outline' }} />
+              ))}
+            </div>
           )}
           <div className="flex gap-3 mt-4">
             <CombinedFlagBadge item={item} />
@@ -253,6 +261,12 @@ export default function FlagTable(props: FlagTableProps) {
   });
 
   const [filter, setFilter] = useState<string>('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  const globalFilter = useMemo(() => ({
+    text: filter,
+    tags: selectedTags
+  }), [filter, selectedTags]);
 
   const sorting = useSelector(selectSorting);
 
@@ -266,6 +280,15 @@ export default function FlagTable(props: FlagTableProps) {
   const flagKeys = useMemo(() => flags.map((f) => f.key), [flags]);
   const hasFlags = flags.length > 0;
 
+  // Collect all unique tags
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    flags.forEach(flag => {
+      flag.tags?.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet).sort();
+  }, [flags]);
+
   const { setError } = useError();
   useEffect(() => {
     if (error) {
@@ -277,18 +300,41 @@ export default function FlagTable(props: FlagTableProps) {
     data: flags,
     columns,
     state: {
-      globalFilter: filter,
+      globalFilter,
       sorting,
       pagination
     },
-    globalFilterFn: 'includesString',
+    globalFilterFn: (row, columnId, filterValue) => {
+      const flag = row.original;
+      const { text: searchText, tags: selectedTags } = filterValue as { text: string; tags: string[] };
+
+      // Text search
+      if (searchText) {
+        const searchableText = `${flag.key} ${flag.name} ${flag.description}`.toLowerCase();
+        if (!searchableText.includes(searchText.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Tag filtering
+      if (selectedTags.length > 0) {
+        const flagTags = flag.tags || [];
+        const hasMatchingTag = selectedTags.some(selectedTag =>
+          flagTags.includes(selectedTag)
+        );
+        if (!hasMatchingTag) {
+          return false;
+        }
+      }
+
+      return true;
+    },
     onSortingChange: (updater) => {
       const newSorting =
         typeof updater === 'function' ? updater(sorting) : updater;
       dispatch(setSorting(newSorting));
     },
     onPaginationChange: setPagination,
-    onGlobalFilterChange: setFilter,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -319,6 +365,36 @@ export default function FlagTable(props: FlagTableProps) {
           <div className="flex flex-1 items-center justify-between">
             <div className="flex items-center gap-4">
               <Searchbox value={filter ?? ''} onChange={setFilter} />
+              {allTags.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Tags:
+                  </label>
+                  <select
+                    multiple
+                    value={selectedTags}
+                    onChange={(e) => {
+                      const options = Array.from(e.target.selectedOptions, option => option.value);
+                      setSelectedTags(options);
+                    }}
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1 text-sm shadow-xs focus:border-violet-300 focus:ring-violet-300 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                  >
+                    {allTags.map(tag => (
+                      <option key={tag} value={tag}>
+                        {tag}
+                      </option>
+                    ))}
+                  </select>
+                  {selectedTags.length > 0 && (
+                    <button
+                      onClick={() => setSelectedTags([])}
+                      className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
             {hasFlags && <DataTableViewOptions table={table} />}
           </div>

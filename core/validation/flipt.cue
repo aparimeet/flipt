@@ -1,4 +1,4 @@
-version: "1.0" | "1.1" | "1.2" | "1.3" | "1.4" | *"1.5"
+version: "1.0" | "1.1" | "1.2" | "1.3" | "1.4" | "1.5" | *"1.6"
 
 close({
 	version:    version
@@ -26,6 +26,9 @@ close({
 	}
 	if version == "1.3" || version == "1.4" || version == "1.5" {
 		metadata: [string]: !=null
+	}
+	if version == "1.5" || version == "1.6" {
+		tags?: [...string]
 	}
 }
 

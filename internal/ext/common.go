@@ -32,6 +32,7 @@ type Flag struct {
 	Variants    []*Variant     `yaml:"variants,omitempty" json:"variants,omitempty"`
 	Rules       []*Rule        `yaml:"rules,omitempty" json:"rules,omitempty"`
 	Rollouts    []*Rollout     `yaml:"rollouts,omitempty" json:"rollouts,omitempty"`
+	Tags        []string       `yaml:"tags,omitempty" json:"tags,omitempty"`
 }
 
 type Variant struct {
